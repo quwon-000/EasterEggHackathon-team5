@@ -4,298 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <title>タマゴゲーム</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #121212;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            overflow: hidden;
-        }
-
-        /* --- タイトル画面 --- */
-        #title-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #121212;
-            display: flex;
-            /* 初期状態は表示 */
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            cursor: pointer;
-            /* 画面全体をクリック可能に */
-        }
-
-        #title-screen h1 {
-            font-size: 5rem;
-            color: #ffd700;
-            margin: 0;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
-            animation: titlePulse 2s infinite alternate;
-        }
-
-        #start-msg {
-            margin-top: 40px;
-            font-size: 1.5rem;
-            color: #aaa;
-            animation: blink 1.5s infinite;
-        }
-
-        /* --- ゲームエリア（初期は非表示） --- */
-        #game-area {
-            display: none;
-            /* 初期状態は非表示 */
-            text-align: center;
-            z-index: 1;
-        }
-
-        #char-wrapper {
-            width: 400px;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        /* クリック時の挙動（進化完了後は無効化される） */
-        #char-wrapper:active {
-            transform: scale(0.95);
-        }
-
-        /* 進化完了後のスタイル */
-        #char-wrapper.finished {
-            cursor: default;
-            pointer-events: none;
-            /* ここでクリックを完全に無効化 */
-        }
-
-        #char-img {
-            max-width: 100%;
-            max-height: 100%;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
-            transition: filter 0.5s;
-        }
-
-        #msg {
-            font-size: 1.5rem;
-            font-weight: bold;
-            height: 2rem;
-            /* メッセージ切り替え時にガタつかないよう高さを固定 */
-            margin-bottom: 10px;
-            color: #ffd700;
-        }
-
-        .stats-panel {
-            margin-top: 20px;
-            font-size: 1.2rem;
-            color: #aaa;
-        }
-
-        #total-clicks {
-            font-size: 1.8rem;
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        /* --- クリア画面（ドラゴンを隠さない） --- */
-        #clear-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.2) 100%);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 80px;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        #clear-content {
-            pointer-events: auto;
-            text-align: center;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        /* アニメーション定義 */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes titlePulse {
-            from {
-                transform: scale(1);
-                text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
-            }
-
-            to {
-                transform: scale(1.05);
-                text-shadow: 0 0 50px rgba(255, 215, 0, 0.9);
-            }
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0;
-            }
-        }
-
-        #clear-overlay h1 {
-            font-size: 5rem;
-            color: #ffd700;
-            margin: 0;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-        }
-
-        #restart-btn {
-            margin-top: 20px;
-            padding: 15px 50px;
-            font-size: 1.2rem;
-            background: white;
-            color: black;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        #restart-btn:hover {
-            background: #ffd700;
-            transform: scale(1.05);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+    <canvas id="fwCanvas"></canvas>
+
+    <!-- タイトル画面 -->
     <div id="title-screen">
         <h1>タマゴゲーム</h1>
-        <div id="start-msg">クリックでスタート</div>
+        <button id="new-game-btn" class="menu-btn">New Game</button>
+        <button id="continue-btn" class="menu-btn">Continue</button>
     </div>
 
+    <!-- ゲーム画面 -->
     <div id="game-area">
-        <div id="msg">タマゴ</div>
+        <h1 id="msg">タマゴ</h1>
+        <!-- index.html の該当箇所 -->
         <div id="char-wrapper">
-            <img id="char-img" src="egg.png">
+            <img id="char-img" src="character/egg.png"> <!-- ここを修正 -->
         </div>
-        <div class="stats-panel">
-            Total Clicks: <span id="total-clicks">0</span>
+        <div class="stats">
+            今回のクリック: <span id="clicks">0</span><br>
+            通算クリック: <span id="lifetime">0</span>
         </div>
     </div>
 
+    <!-- クリアオーバーレイ -->
     <div id="clear-overlay">
-        <div id="clear-content">
-            <h1>CLEAR !!</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 20px;">伝説のドラゴンが誕生しました</p>
-            <button id="restart-btn">もう一度遊ぶ</button>
-        </div>
+        <h1 class="clear-text">CLEAR !!</h1>
+        <button class="btn-action" id="restart-btn">もう一度遊ぶ</button>
     </div>
 
-    <script>
-        const stages = [
-            { threshold: 0, img: 'egg.png', msg: 'タマゴ' },
-            { threshold: 20, img: 'chicken.png', msg: 'ニワトリ' },
-            { threshold: 60, img: 'dragon.png', msg: 'ドラゴン' }
-        ];
-
-        // --- データの初期化 ---
-        // localStorageを削除したので、ページを開くたびに必ず 0 から始まります
-        let clicks = 0;
-        let currentStageIndex = 0;
-
-        const titleScreen = document.getElementById('title-screen');
-        const gameArea = document.getElementById('game-area');
-        const charImg = document.getElementById('char-img');
-        const msgDisplay = document.getElementById('msg');
-        const totalDisplay = document.getElementById('total-clicks');
-        const overlay = document.getElementById('clear-overlay');
-        const restartBtn = document.getElementById('restart-btn');
-        const charWrapper = document.getElementById('char-wrapper');
-
-        // 表示更新用の関数
-        function updateVisuals() {
-            let newIndex = 0;
-            for (let i = 0; i < stages.length; i++) {
-                if (clicks >= stages[i].threshold) {
-                    newIndex = i;
-                }
-            }
-            currentStageIndex = newIndex;
-
-            totalDisplay.innerText = clicks;
-            charImg.src = stages[currentStageIndex].img;
-            msgDisplay.innerText = stages[currentStageIndex].msg;
-
-            if (currentStageIndex === stages.length - 1) {
-                charWrapper.classList.add('finished');
-                charImg.style.filter = 'drop-shadow(0 0 40px gold) brightness(1.2)';
-                // 少し遅らせてクリア画面を表示
-                setTimeout(() => {
-                    overlay.style.display = 'flex';
-                }, 500);
-            } else {
-                charWrapper.classList.remove('finished');
-                charImg.style.filter = 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.4))';
-                overlay.style.display = 'none';
-            }
-        }
-
-        // タイトルクリックで開始
-        titleScreen.addEventListener('click', () => {
-            titleScreen.style.display = 'none';
-            gameArea.style.display = 'block';
-            updateVisuals();
-        });
-
-        // キャラクタークリック
-        charWrapper.addEventListener('click', () => {
-            if (currentStageIndex >= stages.length - 1) return;
-
-            clicks++;
-            // ここでの保存処理（localStorage.setItem）を削除しました
-            updateVisuals();
-        });
-
-        // もう一度遊ぶ（リセット）
-        restartBtn.addEventListener('click', () => {
-            // 確認ダイアログを出すかはお好みで（今回はそのままリセットします）
-            clicks = 0;
-            updateVisuals();
-            overlay.style.display = 'none';
-        });
-    </script>
-
+    <script src="script.js"></script>
 </body>
 
 </html>
