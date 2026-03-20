@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hidden Stage - Block Breaker</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #e94560;
+            text-shadow: 0 0 10px #e94560;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            box-shadow: 0 0 20px #0f3460;
+            border-radius: 8px;
+            display: block;
+            max-width: 95vw;
+            max-height: 80vh;
+            height: auto;
+        }
+
+        #message-area {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            height: 30px;
+            color: #ffd700;
+        }
+
+        #controls-info {
+            position: absolute;
+            left: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 180px;
+            text-align: right;
+            color: #ffd700;
+            font-size: 1rem;
+            line-height: 1.5;
+            pointer-events: none;
+        }
+
+        #chicken {
+            width: 300px;
+            height: 150px;
+            position: absolute;
+            top: 1%;
+            left: 94%;
+            transform: translateX(-30%);
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <div id="controls-info">
+            【操作方法】<br>
+            矢印キー（← →）で<br>
+            台を動かして<br>
+            弾を打ち返せ！
+        </div>
+
+        <h1>Block Breaker</h1>
+        <canvas id="gameCanvas" width="800" height="800"></canvas>
+        <div id="message-area">すべてのブロックを破壊せよ...！</div>
+        <img src="character/chicken.png" id="chicken">
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const messageArea = document.getElementById("message-area");
+
+        // デバッグ用：Enter 3回連続検知
+        let debugEnterCount = 0;
+
+        const ballRadius = 10;
+        let balls = [
+            { x: canvas.width - 40, y: 40, dx: -3, dy: 3, isDead: false }
+        ];
+
+        let spawnedAt70 = false;
+        let spawnedAt10 = false;
+
+        const paddleHeight = 10;
+        const paddleWidth = 75;
+        let paddleX = (canvas.width - paddleWidth) / 2;
+        let rightPressed = false;
+        let leftPressed = false;
+
+        const eggPattern = [
+            [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
+            [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]
+        ];
+
+        const brickRowCount = 5;
+        const brickColumnCount = 36;
+        const brickWidth = 18;
+        const brickHeight = 18;
+        const brickPadding = 2;
+        const brickOffsetTop = 150;
+        const brickOffsetLeft = 41;
+
+        let bricks = [];
+        let totalBricks = 0;
+
+        for (let c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for (let r = 0; r < brickRowCount; r++) {
+                let setupStatus = eggPattern[r][c];
+                bricks[c][r] = { x: 0, y: 0, status: setupStatus };
+                if (setupStatus === 1) totalBricks++;
+            }
+        }
+
+        let isGameOver = false;
+        let isGameCleared = false;
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = true;
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = true;
+            } else if (e.key == "Enter") {
+                // デバッグ用処理
+                debugEnterCount++;
+                if (debugEnterCount >= 3) {
+                    window.location.href = "index.html?cleared=true";
+                }
+            } else {
+                debugEnterCount = 0; // Enter以外のキーが挟まったらリセット
+            }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key == "Right" || e.key == "ArrowRight") rightPressed = false;
+            else if (e.key == "Left" || e.key == "ArrowLeft") leftPressed = false;
+        });
+
+        function collisionDetection() {
+            for (let i = 0; i < balls.length; i++) {
+                let ball = balls[i];
+                if (ball.isDead) continue;
+
+                for (let c = 0; c < brickColumnCount; c++) {
+                    for (let r = 0; r < brickRowCount; r++) {
+                        let b = bricks[c][r];
+                        if (b.status == 1) {
+                            if (ball.x > b.x && ball.x < b.x + brickWidth && ball.y > b.y && ball.y < b.y + brickHeight) {
+                                ball.dy = -ball.dy;
+                                b.status = 0;
+                                totalBricks--;
+
+                                if (totalBricks === 0) {
+                                    isGameCleared = true;
+                                    window.location.href = "index.html?cleared=true";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawBall() {
+            for (let i = 0; i < balls.length; i++) {
+                let ball = balls[i];
+                if (!ball.isDead) {
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+            ctx.fillStyle = "#ffd700";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBricks() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    if (bricks[c][r].status == 1) {
+                        let bX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+                        let bY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+                        bricks[c][r].x = bX;
+                        bricks[c][r].y = bY;
+
+                        ctx.beginPath();
+                        ctx.rect(bX, bY, brickWidth, brickHeight);
+                        ctx.fillStyle = "#ffd700";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function spawnExtraBalls() {
+            let startX = canvas.width - 40;
+            let startY = 40;
+            balls.push({ x: startX, y: startY, dx: -2, dy: 4, isDead: false });
+            balls.push({ x: startX, y: startY, dx: -4, dy: 2, isDead: false });
+            balls.push({ x: startX, y: startY, dx: -3, dy: 5, isDead: false });
+            balls.push({ x: startX, y: startY, dx: -5, dy: 3, isDead: false });
+        }
+
+        function draw() {
+            if (isGameOver || isGameCleared) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            collisionDetection();
+
+            if (totalBricks <= 80 && !spawnedAt70 && balls.length > 0) {
+                spawnedAt70 = true;
+                spawnExtraBalls();
+                spawnExtraBalls();
+            }
+
+            if (totalBricks <= 15 && !spawnedAt10 && balls.length > 0) {
+                spawnedAt10 = true;
+                spawnExtraBalls();
+            }
+
+            for (let i = 0; i < balls.length; i++) {
+                let ball = balls[i];
+                if (ball.isDead) continue;
+
+                if (ball.x + ball.dx > canvas.width - ballRadius || ball.x + ball.dx < ballRadius) ball.dx = -ball.dx;
+                if (ball.y + ball.dy < ballRadius) ball.dy = -ball.dy;
+                else if (ball.y + ball.dy > canvas.height - ballRadius) {
+                    if (ball.x > paddleX && ball.x < paddleX + paddleWidth) {
+                        ball.dy = -ball.dy;
+                        if (Math.abs(ball.dy) < 24) {
+                            ball.dy *= 1.1;
+                            ball.dx *= 1.1;
+                        }
+                        ball.dx = ball.dx + (ball.x - (paddleX + paddleWidth / 2)) * 0.05;
+                    } else {
+                        ball.isDead = true;
+                    }
+                }
+
+                if (!ball.isDead) {
+                    ball.x += ball.dx;
+                    ball.y += ball.dy;
+                }
+            }
+
+            balls = balls.filter(b => !b.isDead);
+
+            if (balls.length === 0) {
+                isGameOver = true;
+                messageArea.innerText = "GAME OVER。クリックで再挑戦。";
+                messageArea.style.color = "#ff0000";
+                canvas.onclick = () => location.reload();
+                return;
+            }
+
+            if (rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 5;
+            else if (leftPressed && paddleX > 0) paddleX -= 5;
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>
