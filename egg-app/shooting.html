@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hidden Stage - Shooting</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        #score-area {
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #message-area {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-shadow: 2px 2px 5px #000;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="shootingCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="score-area">Score: <span id="scoreValue">0</span></div>
+            <div id="message-area">矢印キーで移動、スペースキーで弾を発射!Scoreが200になると、、、</div>
+        </div>
+    </div>
+
+    <script>
+        // === 画面やキャンバスの準備 ===
+        const canvas = document.getElementById("shootingCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreValue");
+        const messageArea = document.getElementById("message-area");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // === ゲームの状態管理（スコア・フラグなど） ===
+        let score = 0;
+        let isGameOver = false;
+        let isGameCleared = false;
+        let frameCount = 0;
+        let isBossStage = false;
+
+        if (sessionStorage.getItem('startAtBoss') === 'true') {
+            score = 200;
+            scoreDisplay.innerText = score;
+        }
+
+        // === キーボードの入力管理 ===
+        let rightPressed = false;
+        let leftPressed = false;
+        let upPressed = false;
+        let downPressed = false;
+        let spacePressed = false;
+        let spaceRdy = true;
+
+        // === 画像の読み込み ===
+        const playerImg = new Image();
+        playerImg.src = "character/egg_machine.png";
+
+        const EnemyImg = new Image();
+        EnemyImg.src = "character/egg_plants.png";
+
+        const BossImg = new Image();
+        BossImg.src = "character/Boss.png";
+
+        // === キャラクターの設計図（オブジェクト） ===
+        const player = {
+            x: 50,
+            y: window.innerHeight / 2,
+            width: 150,
+            height: 100,
+            speed: 7
+        };
+
+        // === 画面上の物体を管理する配列 ===
+        let bullets = [];      // 自機の弾
+        let enemies = [];      // 通常の敵
+        let enemyBullets = []; // 敵の弾
+        let bossLasers = [];   // ボスの極太レーザー
+        let stars = [];        // 背景の星
+
+        // === ボスの初期設定 ===
+        const boss = {
+            active: false,
+            x: canvas.width,
+            y: window.innerHeight / 2 - 100,
+            width: 400,
+            height: 300,
+            speed: 2,
+            hp: 150,
+            maxHp: 150,
+            actionTimer: 0,
+            state: 'enter'
+        };
+
+        // === キー操作イベント ===
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+            if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+            if (e.key === "Up" || e.key === "ArrowUp") upPressed = true;
+            if (e.key === "Down" || e.key === "ArrowDown") downPressed = true;
+
+            if (e.key === " " || e.code === "Space") {
+                if (spaceRdy && !isGameOver) {
+                    shootBullet();
+                }
+            }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+            if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+            if (e.key === "Up" || e.key === "ArrowUp") upPressed = false;
+            if (e.key === "Down" || e.key === "ArrowDown") downPressed = false;
+
+            if (e.key === " " || e.code === "Space") {
+                spaceRdy = true;
+            }
+        });
+
+        // === 弾や星、敵を生成する関数 ===
+        function shootBullet() {
+            bullets.push({
+                x: player.x + player.width,
+                y: player.y + player.height / 2 - 2,
+                width: 15,
+                height: 4,
+                speed: 10,
+                color: '#ff4444'
+            });
+        }
+
+        function spawnEnemy() {
+            let eY = Math.random() * (canvas.height - 50);
+            enemies.push({
+                x: canvas.width,
+                y: eY,
+                width: 150,
+                height: 100,
+                speed: Math.random() * 3 + 2,
+                hp: 1
+            });
+        }
+
+        function spawnStar() {
+            stars.push({
+                x: canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 2 + 1
+            });
+        }
+
+        // === 毎フレーム実行されるメインループ ===
+        function draw() {
+            // ゲームクリア時の画面
+            if (isGameCleared) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#ffdd44";
+                ctx.font = "bold 80px serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ffaa00";
+                ctx.shadowBlur = 20;
+                ctx.fillText("VICTORY ACHIEVED", canvas.width / 2, Math.max(canvas.height / 2, 100));
+
+                ctx.shadowBlur = 0;
+                ctx.textAlign = "left";
+                ctx.textBaseline = "alphabetic";
+
+                messageArea.innerText = "クリックで最初から";
+                messageArea.style.color = "#ffffff";
+                sessionStorage.removeItem('startAtBoss');
+                canvas.onclick = () => location.reload();
+                return;
+            }
+
+            if (isGameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#aa0000";
+                ctx.font = "bold 90px serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ff0000";
+                ctx.shadowBlur = 20;
+                ctx.fillText("YOU DIED", canvas.width / 2, Math.max(canvas.height / 2, 100));
+
+                ctx.shadowBlur = 0;
+                ctx.textAlign = "left";
+                ctx.textBaseline = "alphabetic";
+
+                if (isBossStage) {
+                    messageArea.innerText = "クリックでボス戦から再挑戦";
+                    sessionStorage.setItem('startAtBoss', 'true');
+                } else {
+                    messageArea.innerText = "クリックで最初から";
+                    sessionStorage.removeItem('startAtBoss');
+                }
+
+                messageArea.style.color = "#ffffff";
+                canvas.onclick = () => location.reload();
+                return;
+            }
+
+            // 画面のクリアとタイマー更新
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            // 背景（星）の生成と移動
+            if (!isBossStage && frameCount % 10 === 0) spawnStar();
+
+            ctx.fillStyle = "#ffffff";
+            for (let i = 0; i < stars.length; i++) {
+                let star = stars[i];
+                if (!isBossStage) {
+                    star.x -= star.speed;
+                }
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            }
+            stars = stars.filter(s => s.x > 0);
+
+            // 自機の移動と描画
+            if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+            if (leftPressed && player.x > 0) player.x -= player.speed;
+            if (upPressed && player.y > 0) player.y -= player.speed;
+            if (downPressed && player.y < canvas.height - player.height) player.y += player.speed;
+
+            ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+
+            // 自機の弾の移動と描画
+            ctx.fillStyle = '#ff4444';
+            for (let i = 0; i < bullets.length; i++) {
+                let bullet = bullets[i];
+                bullet.x += bullet.speed;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            }
+            bullets = bullets.filter(b => b.x < canvas.width);
+
+            // ボス出現判定
+            if (score >= 200 && !isBossStage) {
+                isBossStage = true;
+                boss.active = true;
+                boss.x = canvas.width;
+                boss.y = canvas.height / 2 - boss.height / 2;
+                enemies = [];
+                enemyBullets = [];
+            }
+
+            if (!isBossStage) {
+                if (frameCount % 60 === 0) {
+                    spawnEnemy();
+                }
+            }
+
+            for (let i = 0; i < enemies.length; i++) {
+                let enemy = enemies[i];
+                enemy.x -= enemy.speed;
+
+                ctx.drawImage(EnemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+
+                if (Math.random() < 0.01) {
+                    enemyBullets.push({
+                        x: enemy.x,
+                        y: enemy.y + enemy.height / 2 - 2,
+                        width: 15,
+                        height: 4,
+                        speed: 7,
+                        color: '#ffff00'
+                    });
+                }
+            }
+
+            ctx.fillStyle = '#ffff00';
+            for (let i = 0; i < enemyBullets.length; i++) {
+                let eb = enemyBullets[i];
+                eb.x -= eb.speed;
+                ctx.fillRect(eb.x, eb.y, eb.width, eb.height);
+            }
+            enemyBullets = enemyBullets.filter(b => b.x + b.width > 0);
+
+            // ボスの挙動と攻撃パターン
+            if (isBossStage && boss.active) {
+                ctx.drawImage(BossImg, boss.x, boss.y, boss.width, boss.height);
+
+                if (boss.state === 'enter') {
+                    boss.x -= boss.speed;
+                    if (boss.x < canvas.width - boss.width - 20) {
+                        boss.state = 'idle';
+                        boss.actionTimer = 0;
+                    }
+                } else if (boss.state === 'idle') {
+                    if (typeof boss.speedY === 'undefined') boss.speedY = 3;
+                    boss.y += boss.speedY;
+                    if (boss.hp === 20) {
+                        boss.speedY += 10;
+                    }
+
+                    if (boss.y <= 0 || boss.y >= canvas.height - boss.height) {
+                        boss.speedY *= -1;
+                        if (boss.y <= 0) boss.y = 0;
+                        if (boss.y >= canvas.height - boss.height) boss.y = canvas.height - boss.height;
+                    }
+
+                    boss.actionTimer++;
+
+                    if (boss.actionTimer > 50) {
+                        if (Math.random() < 0.6) {
+                            boss.state = 'scatter';
+                        } else {
+                            boss.state = 'laserCharge';
+                        }
+                        boss.actionTimer = 0;
+                    }
+                } else if (boss.state === 'scatter') {
+                    boss.actionTimer++;
+                    if (boss.actionTimer % 10 === 0) {
+                        for (let k = 0; k < 10; k++) {
+                            enemyBullets.push({
+                                x: boss.x + 20,
+                                y: boss.y + boss.height / 2 + (Math.random() * 100 - 50),
+                                width: 15, height: 15,
+                                speed: Math.random() * 4 + 4,
+                                color: '#ff8800'
+                            });
+                            enemyBullets.push({
+                                x: boss.x + 20,
+                                y: boss.y + boss.height / 2 + (Math.random() * 100 - 50),
+                                width: 15, height: 15,
+                                speed: Math.random() * 2 + 1,
+                                color: '#ff8800'
+                            });
+                        }
+                    }
+                    if (boss.actionTimer > 60) {
+                        boss.state = 'idle';
+                        boss.actionTimer = 0;
+                    }
+                } else if (boss.state === 'laserCharge') {
+                    boss.actionTimer++;
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                    ctx.fillRect(0, boss.y + boss.height / 2 - 2, boss.x, 4);
+
+                    if (boss.actionTimer > 60) {
+                        boss.state = 'laserFire';
+                        boss.actionTimer = 0;
+                        bossLasers.push({
+                            x: 0,
+                            y: boss.y + boss.height / 2 - 40,
+                            width: boss.x,
+                            height: 80,
+                            timer: 45
+                        });
+                    }
+                } else if (boss.state === 'laserFire') {
+                    boss.actionTimer++;
+                    if (boss.actionTimer > 45) {
+                        boss.state = 'idle';
+                        boss.actionTimer = 0;
+                    }
+                }
+
+                for (let i = bossLasers.length - 1; i >= 0; i--) {
+                    let laser = bossLasers[i];
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(laser.x, laser.y + 20, laser.width, 40);
+
+                    laser.timer--;
+                    if (laser.timer <= 0) {
+                        bossLasers.splice(i, 1);
+                    }
+                }
+
+                let barWidth = canvas.width * 0.8;
+                let barHeight = 20;
+                let barX = canvas.width * 0.1;
+                let barY = canvas.height - 40;
+
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                ctx.fillStyle = '#8b0000';
+                let currentHpWidth = (boss.hp / boss.maxHp) * barWidth;
+                if (currentHpWidth < 0) currentHpWidth = 0;
+                ctx.fillRect(barX, barY, currentHpWidth, barHeight);
+                ctx.strokeStyle = '#222222';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 20px serif';
+                ctx.fillText('KING OF EGG PLANT', barX, barY - 10);
+            }
+
+            // === 当たり判定（すべての衝突処理） ===
+            for (let e = enemies.length - 1; e >= 0; e--) {
+                let enemy = enemies[e];
+                let isEnemyHit = false;
+
+                for (let b = bullets.length - 1; b >= 0; b--) {
+                    let bullet = bullets[b];
+
+                    if (bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+
+                        enemy.hp--;
+                        bullets.splice(b, 1);
+
+                        if (enemy.hp <= 0) {
+                            score += 10;
+                            scoreDisplay.innerText = score;
+                            isEnemyHit = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isEnemyHit) {
+                    enemies.splice(e, 1);
+                    continue;
+                }
+
+                if (player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y) {
+                    isGameOver = true;
+                }
+            }
+
+            for (let i = 0; i < enemyBullets.length; i++) {
+                let eb = enemyBullets[i];
+                if (player.x < eb.x + eb.width &&
+                    player.x + player.width > eb.x &&
+                    player.y < eb.y + eb.height &&
+                    player.y + player.height > eb.y) {
+                    isGameOver = true;
+                }
+            }
+
+            for (let i = 0; i < bossLasers.length; i++) {
+                let laser = bossLasers[i];
+                if (player.x < laser.x + laser.width &&
+                    player.x + player.width > laser.x &&
+                    player.y < laser.y + laser.height &&
+                    player.y + player.height > laser.y) {
+                    isGameOver = true;
+                }
+            }
+
+            if (isBossStage && boss.active) {
+                for (let b = bullets.length - 1; b >= 0; b--) {
+                    let bullet = bullets[b];
+                    if (bullet.x < boss.x + boss.width &&
+                        bullet.x + bullet.width > boss.x &&
+                        bullet.y < boss.y + boss.height &&
+                        bullet.y + bullet.height > boss.y) {
+
+                        boss.hp--;
+                        bullets.splice(b, 1);
+
+                        if (boss.hp <= 0) {
+                            boss.active = false;
+                            isGameCleared = true;
+                            score += 1000;
+                            scoreDisplay.innerText = score;
+                            break;
+                        }
+                    }
+                }
+
+                if (boss.active &&
+                    player.x < boss.x + boss.width &&
+                    player.x + player.width > boss.x &&
+                    player.y < boss.y + boss.height &&
+                    player.y + player.height > boss.y) {
+                    isGameOver = true;
+                }
+            }
+
+            enemies = enemies.filter(e => e.x + e.width > 0);
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+
+    </script>
+</body>
+
+</html>
