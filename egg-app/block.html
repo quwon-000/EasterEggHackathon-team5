@@ -66,7 +66,7 @@
     <h1>Block Breaker</h1>
     <canvas id="gameCanvas" width="800" height="800"></canvas>
     <div id="message-area">すべてのブロックを破壊せよ...！</div>
-    <div><img src="./chicken.png" id="chicken"></div>
+    <div><img src="character/chicken.png" id="chicken"></div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -146,7 +146,7 @@
 
                                 if (totalBricks === 0) {
                                     isGameCleared = true;
-                                    messageArea.innerText = "GAME CLEAR!! クリックでもう一度遊ぶ";
+                                    messageArea.innerText = "GAME CLEAR!!";
                                     messageArea.style.color = "#00ff00";
                                     canvas.onclick = () => location.reload();
                                 }
@@ -258,7 +258,7 @@
 
             if (balls.length === 0) {
                 isGameOver = true;
-                messageArea.innerText = "GAME OVER... クリックで再挑戦。";
+                messageArea.innerText = "GAME OVERクリックで再挑戦。";
                 messageArea.style.color = "#ff0000";
                 canvas.onclick = () => location.reload();
                 return;
