@@ -140,7 +140,7 @@ main {
 .piece {
     width: 100px;
     height: 100px;
-    background-image: url('image.png');
+    background-image: url('puzzle-image.png');
     background-size: 300px 300px;
     cursor: grab;
     border-radius: 5px;
