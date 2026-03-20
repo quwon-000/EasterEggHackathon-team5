@@ -1,0 +1,194 @@
+:root {
+    --primary: #9b5de5;
+    --secondary: #f15bb5;
+    --bg-color: #1a1a2e;
+    --text-color: #fff;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-color), #16213e, #0f3460);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+.game-container {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    width: 90%;
+    max-width: 900px;
+    text-align: center;
+    position: relative;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button {
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(241, 91, 181, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+#message {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00f5d4;
+    margin-bottom: 15px;
+    animation: bounce 0.5s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.puzzle-area {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 4px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 2px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transition: gap 0.5s ease;
+}
+
+.slot {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background 0.3s;
+}
+
+.slot.drag-over {
+    background: rgba(155, 93, 229, 0.3);
+}
+
+.pieces-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    width: 325px;
+    height: 325px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    align-content: flex-start;
+}
+
+.piece {
+    width: 100px;
+    height: 100px;
+    background-image: url('image.png');
+    background-size: 300px 300px;
+    cursor: grab;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s, border-radius 0.5s;
+    user-select: none;
+    z-index: 10;
+}
+
+.piece:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    z-index: 100;
+}
+
+.piece.dragging {
+    opacity: 0.5;
+}
+
+.reference-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.reference-image p {
+    font-weight: bold;
+    color: #ffd166;
+}
+
+.reference-image img {
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 800px) {
+    .puzzle-area {
+        flex-direction: column;
+        align-items: center;
+    }
+}
