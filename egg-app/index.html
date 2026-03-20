@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>タマゴゲーム</title>
+    <title>タマゴゲーム - 完全版</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -11,19 +11,43 @@
 
     <canvas id="fwCanvas"></canvas>
 
+    <!-- UIボタン (ゲーム中のみ表示) -->
+    <button id="encyclopedia-btn" class="ui-btn">図鑑</button>
+    <button id="back-to-title-btn" class="ui-btn">タイトルに戻る</button>
+
     <!-- タイトル画面 -->
     <div id="title-screen">
         <h1>タマゴゲーム</h1>
-        <button id="new-game-btn" class="menu-btn">New Game</button>
-        <button id="continue-btn" class="menu-btn">Continue</button>
+        <div class="menu-container">
+            <button id="new-game-btn" class="menu-btn">New Game</button>
+            <button id="continue-btn" class="menu-btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- 図鑑画面 -->
+    <div id="encyclopedia-screen">
+        <button id="close-encyclopedia">×</button>
+        <h2 class="encyclopedia-title">図 鑑</h2>
+        <div class="collection-grid" id="collection-grid"></div>
+    </div>
+
+    <!-- リセット警告モーダル -->
+    <div id="confirm-modal">
+        <div class="modal-content">
+            <h2 style="color: #ff4444;">完全リセット</h2>
+            <p>現在の進行状況を消去して最初から始めますか？<br><small>※通算クリック数は維持されます</small></p>
+            <div style="margin-top:20px;">
+                <button id="confirm-yes" class="modal-btn yes">はい</button>
+                <button id="confirm-no" class="modal-btn no">いいえ</button>
+            </div>
+        </div>
     </div>
 
     <!-- ゲーム画面 -->
     <div id="game-area">
         <h1 id="msg">タマゴ</h1>
-        <!-- index.html の該当箇所 -->
         <div id="char-wrapper">
-            <img id="char-img" src="character/egg.png"> <!-- ここを修正 -->
+            <img id="char-img" src="character/egg.png">
         </div>
         <div class="stats">
             今回のクリック: <span id="clicks">0</span><br>
