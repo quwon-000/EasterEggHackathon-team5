@@ -6,6 +6,10 @@ body {
     margin: 0;
     padding: 0;
     background-color: #121212;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in-out, background-color 1s ease-in-out;
     color: #fff;
     font-family: sans-serif;
     display: flex;
@@ -14,6 +18,10 @@ body {
     height: 100vh;
     overflow: hidden;
 }
+
+body.bg-egg { background-image: url('character/bg_egg.png'); }
+body.bg-chicken { background-image: url('character/bg_chicken.png'); }
+body.bg-dragon { background-image: url('character/bg_dragon.png'); }
 
 canvas {
     position: fixed;

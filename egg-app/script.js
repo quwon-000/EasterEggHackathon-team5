@@ -22,9 +22,9 @@ let unlockedIds = ['egg'];
 let inputSeq = "";
 
 const stages = [
-    { id: 'egg', threshold: 0, img: 'character/egg.png', msg: 'タマゴ', condition: '最初から' },
-    { id: 'chicken', threshold: 20, img: 'character/chicken.png', msg: 'ニワトリ', condition: '20回クリック' },
-    { id: 'dragon', threshold: 60, img: 'character/dragon.png', msg: 'ドラゴン', condition: '60回クリック' }
+    { id: 'egg', threshold: 0, img: 'character/egg.png', msg: 'タマゴ', condition: '最初から', bgClass: 'bg-egg' },
+    { id: 'chicken', threshold: 20, img: 'character/chicken.png', msg: 'ニワトリ', condition: '20回クリック', bgClass: 'bg-chicken' },
+    { id: 'dragon', threshold: 60, img: 'character/dragon.png', msg: 'ドラゴン', condition: '60回クリック', bgClass: 'bg-dragon' }
 ];
 
 const secretStages = {
@@ -85,6 +85,7 @@ function updateVisuals() {
     stages.forEach(s => { if (clicks >= s.threshold) current = s; });
     charImg.src = current.img;
     msgEl.innerText = current.msg;
+    document.body.className = current.bgClass;
     clicksEl.innerText = clicks;
     lifetimeEl.innerText = lifetime;
 
