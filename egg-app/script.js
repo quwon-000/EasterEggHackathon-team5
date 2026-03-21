@@ -139,7 +139,7 @@ volumeBar.oninput = (e) => { bgm.volume = e.target.value; };
 document.getElementById('encyclopedia-btn').onclick = () => {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
-    container.appendChild(createRow('egg', 'puzzle_chicken', 'jesus'));
+    container.appendChild(createRow('egg', null, 'jesus'));
     if (unlockedIds.includes('chicken')) {
         container.appendChild(createVArrow());
         container.appendChild(createRow('chicken', 'block_chicken', 'plane'));
@@ -148,6 +148,24 @@ document.getElementById('encyclopedia-btn').onclick = () => {
         container.appendChild(createVArrow());
         container.appendChild(createRow('dragon', null, null));
     }
+
+    // パズルなどの独立したミニゲームクリア特典枠
+    if (unlockedIds.includes('puzzle_chicken')) {
+        const divider = document.createElement('h3');
+        divider.style.color = 'gold';
+        divider.style.marginTop = '50px';
+        divider.style.textAlign = 'center';
+        divider.innerText = '─ EXTRA ─';
+        container.appendChild(divider);
+
+        const extraContainer = document.createElement('div');
+        extraContainer.style.display = 'flex';
+        extraContainer.style.justifyContent = 'center';
+        extraContainer.style.marginTop = '20px';
+        extraContainer.appendChild(createNode('puzzle_chicken'));
+        container.appendChild(extraContainer);
+    }
+
     document.getElementById('encyclopedia-screen').style.display = 'flex';
 };
 
