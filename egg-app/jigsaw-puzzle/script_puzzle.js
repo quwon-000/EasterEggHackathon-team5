@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const startBtn = document.getElementById('start-btn');
     const piecesContainer = document.getElementById('pieces-container');
     const board = document.getElementById('board');
     const slots = document.querySelectorAll('.slot');
@@ -145,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const p = slot.firstChild;
                 p.style.boxShadow = 'none';
                 p.style.borderRadius = '0';
+                p.setAttribute('draggable', false);
+                p.style.pointerEvents = 'none';
             });
         } else {
             // Restore visual layout if a piece is moved again
@@ -159,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Start game on initialization and button click
-    startBtn.addEventListener('click', initGame);
+    // Start game on initialization
     initGame();
 });
