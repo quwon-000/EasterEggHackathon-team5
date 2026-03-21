@@ -28,7 +28,8 @@ const stages = [
 const secretStages = {
     'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト', condition: '??? (聖なる力)' },
     'chicken': { id: 'plane', img: 'character/plane.png', msg: 'ジェット機', condition: 'コマンド入力: shooting' },
-    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' }
+    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' },
+    'puzzle': { id: 'puzzle_chicken', img: 'character/chiken-puzzle.png', msg: 'パズルマスター', condition: 'パズルをクリア' }
 };
 
 window.onload = () => {
@@ -41,6 +42,8 @@ window.onload = () => {
     if (clearedType) {
         if (clearedType === 'shooting') {
             showSpecialEvolution('chicken');
+        } else if (clearedType === 'puzzle') {
+            showSpecialEvolution('puzzle');
         } else {
             showSpecialEvolution('special');
         }
@@ -136,7 +139,7 @@ volumeBar.oninput = (e) => { bgm.volume = e.target.value; };
 document.getElementById('encyclopedia-btn').onclick = () => {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
-    container.appendChild(createRow('egg', null, 'jesus'));
+    container.appendChild(createRow('egg', 'puzzle_chicken', 'jesus'));
     if (unlockedIds.includes('chicken')) {
         container.appendChild(createVArrow());
         container.appendChild(createRow('chicken', 'block_chicken', 'plane'));
@@ -195,6 +198,10 @@ document.getElementById('confirm-no').onclick = () => document.getElementById('c
 document.getElementById('continue-btn').onclick = enterGame;
 document.getElementById('back-to-title-btn').onclick = () => location.reload();
 document.getElementById('close-encyclopedia').onclick = () => document.getElementById('encyclopedia-screen').style.display = 'none';
+
+document.getElementById('mini-egg-deco').onclick = () => {
+    window.location.href = 'jigsaw-puzzle/jigsaw-puzzle.html';
+};
 
 document.getElementById('restart-btn').onclick = () => {
     clicks = 0; saveData();
