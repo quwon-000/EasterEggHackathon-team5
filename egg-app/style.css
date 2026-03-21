@@ -286,9 +286,15 @@ canvas {
     width: 40px;
     height: 40px;
     z-index: 40;
-    pointer-events: none;
+    cursor: pointer; /* クリック可能にする */
     opacity: 0.7;
     animation: floatEgg 3s ease-in-out infinite;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+#mini-egg-deco:hover {
+    opacity: 1;
+    transform: scale(1.2);
 }
 
 #mini-egg-deco img {

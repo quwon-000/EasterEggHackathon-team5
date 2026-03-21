@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If win condition met and no missing pieces on board
         if (isWin && piecesOnBoard === 9) {
             message.classList.remove('hidden');
+            message.innerHTML = "完成しました！おめでとうございます！<br>クリックして進化画面へ！";
             
             // Completion animation effects (remove gaps and shadow for a unified picture)
             board.style.gap = '0';
@@ -147,6 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.setAttribute('draggable', false);
                 p.style.pointerEvents = 'none';
             });
+
+            setTimeout(() => {
+                document.onclick = () => window.location.href = "../index.html?cleared=puzzle";
+            }, 100);
         } else {
             // Restore visual layout if a piece is moved again
             board.style.gap = '2px';

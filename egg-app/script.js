@@ -28,7 +28,8 @@ const stages = [
 const secretStages = {
     'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト', condition: '??? (聖なる力)' },
     'chicken': { id: 'plane', img: 'character/plane.png', msg: 'ジェット機', condition: 'コマンド入力: shooting' },
-    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' }
+    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' },
+    'puzzle': { id: 'puzzle_chicken', img: 'character/chiken-puzzle.png', msg: 'パズルマスター', condition: 'パズルをクリア' }
 };
 
 window.onload = () => {
@@ -41,6 +42,8 @@ window.onload = () => {
     if (clearedType) {
         if (clearedType === 'shooting') {
             showSpecialEvolution('chicken');
+        } else if (clearedType === 'puzzle') {
+            showSpecialEvolution('puzzle');
         } else {
             showSpecialEvolution('special');
         }
@@ -145,6 +148,24 @@ document.getElementById('encyclopedia-btn').onclick = () => {
         container.appendChild(createVArrow());
         container.appendChild(createRow('dragon', null, null));
     }
+
+    // パズルなどの独立したミニゲームクリア特典枠
+    if (unlockedIds.includes('puzzle_chicken')) {
+        const divider = document.createElement('h3');
+        divider.style.color = 'gold';
+        divider.style.marginTop = '50px';
+        divider.style.textAlign = 'center';
+        divider.innerText = '─ EXTRA ─';
+        container.appendChild(divider);
+
+        const extraContainer = document.createElement('div');
+        extraContainer.style.display = 'flex';
+        extraContainer.style.justifyContent = 'center';
+        extraContainer.style.marginTop = '20px';
+        extraContainer.appendChild(createNode('puzzle_chicken'));
+        container.appendChild(extraContainer);
+    }
+
     document.getElementById('encyclopedia-screen').style.display = 'flex';
 };
 
@@ -195,6 +216,10 @@ document.getElementById('confirm-no').onclick = () => document.getElementById('c
 document.getElementById('continue-btn').onclick = enterGame;
 document.getElementById('back-to-title-btn').onclick = () => location.reload();
 document.getElementById('close-encyclopedia').onclick = () => document.getElementById('encyclopedia-screen').style.display = 'none';
+
+document.getElementById('mini-egg-deco').onclick = () => {
+    window.location.href = 'jigsaw-puzzle/jigsaw-puzzle.html';
+};
 
 document.getElementById('restart-btn').onclick = () => {
     clicks = 0; saveData();
