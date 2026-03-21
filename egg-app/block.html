@@ -155,7 +155,7 @@
                 // デバッグ用処理
                 debugEnterCount++;
                 if (debugEnterCount >= 3) {
-                    window.location.href = "index.html?cleared=true";
+                    window.location.href = "index.html?cleared=block";
                 }
             } else {
                 debugEnterCount = 0; // Enter以外のキーが挟まったらリセット
@@ -183,7 +183,7 @@
 
                                 if (totalBricks === 0) {
                                     isGameCleared = true;
-                                    window.location.href = "index.html?cleared=true";
+                                    window.location.href = "index.html?cleared=block";
                                 }
                             }
                         }

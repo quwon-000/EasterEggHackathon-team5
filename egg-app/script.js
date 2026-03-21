@@ -38,8 +38,9 @@ window.onload = () => {
     bgm.volume = 0; // 初期音量を0に設定
     const params = new URLSearchParams(window.location.search);
 
-    if (params.get('cleared') === 'true') {
-        if (unlockedIds.includes('chicken') && !unlockedIds.includes('plane')) {
+    const clearedType = params.get('cleared');
+    if (clearedType) {
+        if (clearedType === 'shooting') {
             showSpecialEvolution('chicken');
         } else {
             showSpecialEvolution('special');
