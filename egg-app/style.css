@@ -19,6 +19,22 @@ body {
     overflow: hidden;
 }
 
+/* 画期的方法：背景全体に「グラスモーフィズム（すりガラス効果）」のレイヤーを挟む */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 背景を暗くしつつ、ぼかしを入れて手前の要素をくっきりさせる */
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 0;
+    pointer-events: none;
+}
+
 body.bg-egg { background-image: url('character/bg_egg.png'); }
 body.bg-chicken { background-image: url('character/bg_chicken.png'); }
 body.bg-dragon { background-image: url('character/bg_dragon.png'); }
@@ -91,11 +107,32 @@ canvas {
     width: 250px;
     height: 250px;
     object-fit: contain;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.3));
+    /* 画期的方法：キャラクター画像に強力な二重の光彩ドロップシャドウをかけて、暗い背景から浮き出させる */
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.8));
+    transition: filter 0.3s ease;
+}
+
+#char-img:hover {
+    filter: drop-shadow(0 0 30px rgba(255, 255, 255, 1)) drop-shadow(0 0 60px rgba(255, 215, 0, 1));
 }
 
 .click-bounce {
     transform: scale(0.92);
+}
+
+/* ステータス表示 */
+.stats {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stats p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+    text-shadow: 1px 1px 2px #000;
 }
 
 /* 図鑑画面 */
