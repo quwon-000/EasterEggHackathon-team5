@@ -209,7 +209,7 @@
                 messageArea.innerText = "クリックで最初から";
                 messageArea.style.color = "#ffffff";
                 sessionStorage.removeItem('startAtBoss');
-                canvas.onclick = () => location.reload();
+                document.onclick = () => location.reload();
                 return;
             }
 
@@ -238,7 +238,7 @@
                 }
 
                 messageArea.style.color = "#ffffff";
-                canvas.onclick = () => location.reload();
+                document.onclick = () => location.reload();
                 return;
             }
 
