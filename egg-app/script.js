@@ -86,7 +86,7 @@ function updateVisuals() {
     lifetimeEl.innerText = lifetime;
 
     if (hintEl) {
-        const hintText = "eorfn";
+        const hintText = "eorfn      this is not easter egg lol";
         const showLength = Math.floor(lifetime / 60);
         hintEl.innerText = hintText.substring(0, showLength);
     }
