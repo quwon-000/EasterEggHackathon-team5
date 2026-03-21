@@ -8,8 +8,6 @@ const charWrapper = document.getElementById('char-wrapper');
 const clearOverlay = document.getElementById('clear-overlay');
 const hintEl = document.getElementById('hint');
 
-
-// BGM要素
 const bgm = document.getElementById('bgm');
 const volumeBar = document.getElementById('volume-bar');
 const settingsModal = document.getElementById('settings-modal');
@@ -35,9 +33,8 @@ const secretStages = {
 
 window.onload = () => {
     loadData();
-    bgm.volume = 0; // 初期音量を0に設定
+    bgm.volume = 0;
     const params = new URLSearchParams(window.location.search);
-
     if (params.get('cleared') === 'true') {
         if (unlockedIds.includes('chicken') && !unlockedIds.includes('plane')) {
             showSpecialEvolution('chicken');
@@ -72,11 +69,7 @@ function enterGame() {
     document.getElementById('title-screen').style.display = 'none';
     document.getElementById('game-area').style.display = 'flex';
     document.getElementById('ui-layer').style.display = 'block';
-
-    // ユーザー操作をトリガーにBGM再生開始
-    if (bgm.paused) {
-        bgm.play().catch(e => console.log("Audio play blocked."));
-    }
+    if (bgm.paused) bgm.play().catch(e => console.log("Audio play blocked."));
     updateVisuals();
 }
 
@@ -105,23 +98,18 @@ charWrapper.onclick = () => {
     if (isFireworksActive) return;
     charWrapper.classList.add('click-bounce');
     setTimeout(() => charWrapper.classList.remove('click-bounce'), 100);
-    clicks++;
-    lifetime++;
-    saveData();
-    updateVisuals();
+    clicks++; lifetime++;
+    saveData(); updateVisuals();
 };
 
 window.onkeydown = (e) => {
     const key = e.key.toLowerCase();
     inputSeq += key;
     const currentMsg = msgEl.innerText;
-
     if ("block".startsWith(inputSeq)) {
         if (inputSeq === "block") window.location.href = "block.html";
     } else if ("shooting".startsWith(inputSeq)) {
-        if (inputSeq === "shooting" && currentMsg === "ニワトリ") {
-            window.location.href = "shooting.html";
-        }
+        if (inputSeq === "shooting" && currentMsg === "ニワトリ") window.location.href = "shooting.html";
     } else {
         inputSeq = (key === "b" || key === "s") ? key : "";
     }
@@ -137,7 +125,6 @@ function showSpecialEvolution(type) {
     if (!isFireworksActive) startFireworks();
 }
 
-// 設定画面（音量調整）の操作
 document.getElementById('settings-btn').onclick = () => settingsModal.style.display = 'flex';
 document.getElementById('close-settings').onclick = () => settingsModal.style.display = 'none';
 volumeBar.oninput = (e) => { bgm.volume = e.target.value; };
@@ -185,18 +172,13 @@ function createNode(id) {
     const node = document.createElement('div');
     node.className = 'char-node';
     const data = stages.find(s => s.id === id) || Object.values(secretStages).find(s => s.id === id);
-    node.innerHTML = `
-        <img src="${data.img}">
-        <span>${data.msg}</span>
-        <div class="tooltip">条件: ${data.condition}</div>
-    `;
+    node.innerHTML = `<img src="${data.img}"><span>${data.msg}</span><div class="tooltip">条件: ${data.condition}</div>`;
     return node;
 }
 
 function createVArrow() {
     const div = document.createElement('div');
-    div.className = 'tree-arrow-row';
-    div.innerText = '▼';
+    div.className = 'tree-arrow-row'; div.innerText = '▼';
     return div;
 }
 
@@ -211,32 +193,23 @@ document.getElementById('back-to-title-btn').onclick = () => location.reload();
 document.getElementById('close-encyclopedia').onclick = () => document.getElementById('encyclopedia-screen').style.display = 'none';
 
 document.getElementById('restart-btn').onclick = () => {
-    clicks = 0;
-    saveData();
+    clicks = 0; saveData();
     document.getElementById('clear-overlay').style.display = 'none';
-    isFireworksActive = false;
-    particles = [];
+    isFireworksActive = false; particles = [];
     enterGame();
 };
 
-function startNewGame() {
-    clicks = 0; lifetime = 0; unlockedIds = ['egg'];
-    saveData(); enterGame();
-}
+function startNewGame() { clicks = 0; lifetime = 0; unlockedIds = ['egg']; saveData(); enterGame(); }
 
 function startFireworks() {
-    isFireworksActive = true;
-    resize();
+    isFireworksActive = true; resize();
     const interval = setInterval(() => {
         const x = Math.random() * canvas.width;
         const y = Math.random() * (canvas.height * 0.5);
         const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
         for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
     }, 300);
-    setTimeout(() => {
-        clearInterval(interval);
-        document.getElementById('clear-overlay').style.display = 'flex';
-    }, 3000);
+    setTimeout(() => { clearInterval(interval); document.getElementById('clear-overlay').style.display = 'flex'; }, 3000);
     animate();
 }
 
@@ -261,5 +234,4 @@ function animate() {
 }
 
 function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.onresize = resize;
-resize();
+window.onresize = resize; resize();
