@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hidden Stage - Shooting</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: sans-serif;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #score-area {
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #message-area {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-shadow: 2px 2px 5px #000;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="shootingCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="score-area">Score: <span id="scoreValue">0</span></div>
+            <div id="message-area">矢印キーで移動、スペースで発射！</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("shootingCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreValue");
+        const messageArea = document.getElementById("message-area");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let score = 0;
+        let isGameOver = false;
+        let isGameCleared = false;
+        let frameCount = 0;
+        let isBossStage = false;
+
+        // キー入力状態
+        let rightPressed = false, leftPressed = false, upPressed = false, downPressed = false, spaceRdy = true;
+
+        // 裏技用変数
+        let shiftCount = 0;
+        let lastShiftTime = 0;
+
+        // 画像
+        const playerImg = new Image(); playerImg.src = "character/egg_machine.png";
+        const EnemyImg = new Image(); EnemyImg.src = "character/egg_plants.png";
+        const BossImg = new Image(); BossImg.src = "character/Boss.png";
+
+        const player = { x: 50, y: window.innerHeight / 2, width: 150, height: 100, speed: 8 };
+        let bullets = [], enemies = [], enemyBullets = [], bossLasers = [], stars = [];
+
+        const boss = {
+            active: false, x: canvas.width, y: 0, width: 400, height: 300,
+            speed: 2, hp: 150, maxHp: 150, actionTimer: 0, state: 'enter'
+        };
+
+        // キーボードイベント
+        document.addEventListener("keydown", (e) => {
+            // Shift 3連打判定
+            if (e.key === "Shift") {
+                const now = Date.now();
+                if (now - lastShiftTime < 500) shiftCount++;
+                else shiftCount = 1;
+                lastShiftTime = now;
+                if (shiftCount === 3) forceClear();
+            }
+
+            if (e.key === "ArrowRight") rightPressed = true;
+            if (e.key === "ArrowLeft") leftPressed = true;
+            if (e.key === "ArrowUp") upPressed = true;
+            if (e.key === "ArrowDown") downPressed = true;
+            if (e.key === " " && spaceRdy && !isGameOver) { shootBullet(); spaceRdy = false; }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowRight") rightPressed = false;
+            if (e.key === "ArrowLeft") leftPressed = false;
+            if (e.key === "ArrowUp") upPressed = false;
+            if (e.key === "ArrowDown") downPressed = false;
+            if (e.key === " ") spaceRdy = true;
+        });
+
+        function shootBullet() {
+            bullets.push({ x: player.x + player.width, y: player.y + player.height / 2, width: 20, height: 5, speed: 12 });
+        }
+
+        function forceClear() {
+            if (isGameCleared) return;
+            score = 2000;
+            boss.hp = 0;
+            boss.active = false;
+            isGameCleared = true;
+            messageArea.innerText = "裏技発動！画面クリックで進化！";
+            document.onclick = () => window.location.href = "index.html?cleared=shooting";
+        }
+
+        function draw() {
+            if (isGameCleared) {
+                ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "gold"; ctx.font = "bold 60px serif"; ctx.textAlign = "center";
+                ctx.fillText("VICTORY ACHIEVED", canvas.width / 2, canvas.height / 2);
+                messageArea.innerText = "クリックして戻る";
+                document.onclick = () => window.location.href = "index.html?cleared=shooting";
+                return;
+            }
+
+            if (isGameOver) {
+                ctx.fillStyle = "rgba(100,0,0,0.7)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white"; ctx.font = "bold 60px serif"; ctx.textAlign = "center";
+                ctx.fillText("YOU DIED", canvas.width / 2, canvas.height / 2);
+                messageArea.innerText = "クリックでリトライ";
+                document.onclick = () => location.reload();
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            // 背景
+            if (frameCount % 5 === 0) stars.push({ x: canvas.width, y: Math.random() * canvas.height, s: Math.random() * 2 });
+            ctx.fillStyle = "white";
+            stars.forEach((s, i) => { s.x -= 2; ctx.fillRect(s.x, s.y, s.s, s.s); if (s.x < 0) stars.splice(i, 1); });
+
+            // プレイヤー
+            if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+            if (leftPressed && player.x > 0) player.x -= player.speed;
+            if (upPressed && player.y > 0) player.y -= player.speed;
+            if (downPressed && player.y < canvas.height - player.height) player.y += player.speed;
+            ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+
+            // 自弾
+            ctx.fillStyle = "cyan";
+            bullets.forEach((b, i) => { b.x += b.speed; ctx.fillRect(b.x, b.y, b.width, b.height); if (b.x > canvas.width) bullets.splice(i, 1); });
+
+            // 敵出現
+            if (!isBossStage && score < 200) {
+                if (frameCount % 60 === 0) enemies.push({ x: canvas.width, y: Math.random() * (canvas.height - 100), w: 100, h: 80, speed: 4 });
+            } else if (!isBossStage) {
+                isBossStage = true; boss.active = true;
+            }
+
+            // 敵処理
+            enemies.forEach((e, ei) => {
+                e.x -= e.speed;
+                ctx.drawImage(EnemyImg, e.x, e.y, e.w, e.h);
+                // 当たり判定
+                bullets.forEach((b, bi) => {
+                    if (b.x < e.x + e.w && b.x + b.width > e.x && b.y < e.y + e.h && b.y + b.height > e.y) {
+                        enemies.splice(ei, 1); bullets.splice(bi, 1); score += 10; scoreDisplay.innerText = score;
+                    }
+                });
+                if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) isGameOver = true;
+            });
+
+            // ボス処理
+            if (boss.active) {
+                ctx.drawImage(BossImg, boss.x, boss.y, boss.width, boss.height);
+                if (boss.state === 'enter') { boss.x -= 2; if (boss.x < canvas.width - 450) boss.state = 'move'; }
+                else {
+                    boss.actionTimer++;
+                    boss.y = (canvas.height / 2 - 150) + Math.sin(frameCount / 50) * 150;
+                    if (boss.actionTimer % 40 === 0) {
+                        enemyBullets.push({ x: boss.x, y: boss.y + 150, w: 20, h: 20, vx: -8, vy: (Math.random() - 0.5) * 4 });
+                    }
+                }
+                bullets.forEach((b, bi) => {
+                    if (b.x < boss.x + boss.width && b.x + b.width > boss.x && b.y < boss.y + boss.height && b.y + b.height > boss.y) {
+                        boss.hp--; bullets.splice(bi, 1);
+                        if (boss.hp <= 0) { boss.active = false; isGameCleared = true; }
+                    }
+                });
+            }
+
+            // 敵弾
+            ctx.fillStyle = "orange";
+            enemyBullets.forEach((eb, i) => {
+                eb.x += eb.vx; eb.y += eb.vy;
+                ctx.fillRect(eb.x, eb.y, eb.w, eb.h);
+                if (player.x < eb.x + eb.w && player.x + player.width > eb.x && player.y < eb.y + eb.h && player.y + player.height > eb.y) isGameOver = true;
+                if (eb.x < -20) enemyBullets.splice(i, 1);
+            });
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+
+</html>

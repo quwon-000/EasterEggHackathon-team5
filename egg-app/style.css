@@ -1,0 +1,353 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in-out, background-color 1s ease-in-out;
+    color: #fff;
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 画期的方法：背景全体に「グラスモーフィズム（すりガラス効果）」のレイヤーを挟む */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 背景を暗くしつつ、ぼかしを入れて手前の要素をくっきりさせる */
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.bg-egg { background-image: url('character/bg_egg.png'); }
+body.bg-chicken { background-image: url('character/bg_chicken.png'); }
+body.bg-dragon { background-image: url('character/bg_dragon.png'); }
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* UIボタン */
+.ui-btn {
+    position: fixed;
+    top: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 50;
+}
+
+#encyclopedia-btn {
+    left: 20px;
+}
+
+#back-to-title-btn {
+    right: 20px;
+}
+
+/* タイトル・ゲームエリア */
+#title-screen,
+#game-area {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.menu-btn {
+    padding: 15px 50px;
+    font-size: 1.2rem;
+    margin: 10px;
+    background: transparent;
+    color: white;
+    border: 2px solid gold;
+    border-radius: 50px;
+    cursor: pointer;
+    width: 250px;
+}
+
+.menu-btn:disabled {
+    border-color: #444;
+    color: #444;
+}
+
+/* キャラクター */
+#char-wrapper {
+    cursor: pointer;
+    margin: 20px 0;
+    transition: transform 0.1s;
+}
+
+#char-img {
+    width: 250px;
+    height: 250px;
+    object-fit: contain;
+    /* 画期的方法：キャラクター画像に強力な二重の光彩ドロップシャドウをかけて、暗い背景から浮き出させる */
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.8));
+    transition: filter 0.3s ease;
+}
+
+#char-img:hover {
+    filter: drop-shadow(0 0 30px rgba(255, 255, 255, 1)) drop-shadow(0 0 60px rgba(255, 215, 0, 1));
+}
+
+.click-bounce {
+    transform: scale(0.92);
+}
+
+/* ステータス表示 */
+.stats {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stats p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* 図鑑画面 */
+#encyclopedia-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.98);
+    z-index: 300;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 20px;
+    overflow-y: auto;
+}
+
+#close-encyclopedia {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 310;
+}
+
+.encyclopedia-title {
+    color: gold;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+}
+
+/* ツリー構造 */
+#tree-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tree-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr;
+    align-items: center;
+    width: 100%;
+    margin: 15px 0;
+}
+
+.node-main {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.node-left-container {
+    grid-column: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.node-secret-container {
+    grid-column: 3;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.char-node {
+    position: relative;
+    width: 90px;
+    height: 110px;
+    background: #1a1a1a;
+    border: 2px solid gold;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+}
+
+.char-node img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.char-node span {
+    font-size: 0.7rem;
+    margin-top: 5px;
+    color: gold;
+    text-align: center;
+}
+
+.tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 215, 0, 0.9);
+    color: #000;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    font-weight: bold;
+    z-index: 400;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.char-node:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.line-h {
+    width: 30px;
+    height: 2px;
+    background: gold;
+}
+
+.arrow-h {
+    color: gold;
+    padding: 0 5px;
+    font-size: 14px;
+}
+
+.tree-arrow-row {
+    font-size: 24px;
+    color: gold;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 右下の装飾タマゴ */
+#mini-egg-deco {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    z-index: 40;
+    cursor: pointer; /* クリック可能にする */
+    opacity: 0.7;
+    animation: floatEgg 3s ease-in-out infinite;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+#mini-egg-deco:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+#mini-egg-deco img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@keyframes floatEgg {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(10deg);
+    }
+}
+
+/* モーダル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+}
+
+.modal-content {
+    background: #222;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid gold;
+}
+
+.btn-action {
+    padding: 10px 30px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+}
+
+.clear-text {
+    font-size: 3rem;
+    color: gold;
+    text-shadow: 0 0 10px gold;
+}
