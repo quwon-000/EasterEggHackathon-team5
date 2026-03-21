@@ -3,56 +3,64 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Ultimate Evolution Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EGG EVOLUTION - 聖なる進化</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <!-- 背景エフェクト用キャンバス -->
+    <!-- 背景エフェクト -->
     <canvas id="fwCanvas"></canvas>
 
     <!-- タイトル画面 -->
     <div id="title-screen">
-        <h1 style="color: gold; font-size: 3rem;">EVOLUTION</h1>
-        <button id="new-game-btn" class="menu-btn">はじめから</button>
-        <button id="continue-btn" class="menu-btn" disabled>つづきから</button>
+        <h1 style="color: gold; font-size: 3rem; margin-bottom: 30px;">EGG EVOLUTION</h1>
+        <div class="menu-buttons">
+            <button id="new-game-btn" class="menu-btn">はじめから</button>
+            <button id="continue-btn" class="menu-btn" disabled>つづきから</button>
+        </div>
     </div>
 
-    <!-- UIボタン -->
-    <button id="encyclopedia-btn" class="ui-btn">図鑑を見る</button>
-    <button id="back-to-title-btn" class="ui-btn">タイトルへ</button>
+    <!-- ゲーム本編 UIボタン -->
+    <div id="ui-layer" style="display: none;">
+        <button id="encyclopedia-btn" class="ui-btn">図鑑を見る</button>
+        <button id="back-to-title-btn" class="ui-btn">タイトルへ</button>
+    </div>
 
-    <!-- メインゲームエリア -->
-    <div id="game-area">
+    <!-- ゲームエリア -->
+    <div id="game-area" style="display: none;">
         <h2 id="msg">タマゴ</h2>
         <div id="char-wrapper">
-            <img src="character/egg.png" id="char-img" alt="Character">
+            <img src="character/egg.png" id="char-img">
         </div>
         <div class="stats">
-            <p>現在のクリック: <span id="clicks">0</span></p>
-            <p>累計クリック: <span id="lifetime">0</span></p>
+            CLICKS: <span id="clicks">0</span> /
+            LIFETIME: <span id="lifetime">0</span>
         </div>
     </div>
 
     <!-- 図鑑画面 -->
-    <div id="encyclopedia-screen">
+    <div id="encyclopedia-screen" style="display: none;">
         <button id="close-encyclopedia">&times;</button>
         <h2 class="encyclopedia-title">EVOLUTION TREE</h2>
-        <div id="tree-container"></div>
+        <div id="tree-container">
+            <!-- JSで生成 -->
+        </div>
     </div>
 
-    <!-- クリアオーバーレイ -->
-    <div id="clear-overlay">
-        <h1 class="clear-text">CONGRATULATIONS!</h1>
-        <button id="restart-btn" class="btn-action">もう一度遊ぶ</button>
-    </div>
-
-    <!-- 確認モーダル -->
-    <div id="confirm-modal">
+    <!-- モーダル・オーバーレイ -->
+    <div id="confirm-modal" style="display: none;">
         <div class="modal-content">
             <p>データをリセットして新しく始めますか？</p>
             <button id="confirm-yes" class="btn-action" style="background: #ff4444; color: white;">はい</button>
             <button id="confirm-no" class="btn-action">いいえ</button>
+        </div>
+    </div>
+
+    <div id="clear-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 class="clear-text">CONGRATULATIONS!</h2>
+            <button id="restart-btn" class="btn-action">もう一度遊ぶ</button>
         </div>
     </div>
 
