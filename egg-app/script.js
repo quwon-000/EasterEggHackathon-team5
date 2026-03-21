@@ -35,8 +35,11 @@ window.onload = () => {
     loadData();
     bgm.volume = 0;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('cleared') === 'true') {
-        if (unlockedIds.includes('chicken') && !unlockedIds.includes('plane')) {
+
+
+    const clearedType = params.get('cleared');
+    if (clearedType) {
+        if (clearedType === 'shooting') {
             showSpecialEvolution('chicken');
         } else {
             showSpecialEvolution('special');

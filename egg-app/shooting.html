@@ -132,7 +132,7 @@
             boss.active = false;
             isGameCleared = true;
             messageArea.innerText = "裏技発動！画面クリックで進化！";
-            document.onclick = () => window.location.href = "index.html?cleared=true";
+            document.onclick = () => window.location.href = "index.html?cleared=shooting";
         }
 
         function draw() {
@@ -141,7 +141,7 @@
                 ctx.fillStyle = "gold"; ctx.font = "bold 60px serif"; ctx.textAlign = "center";
                 ctx.fillText("VICTORY ACHIEVED", canvas.width / 2, canvas.height / 2);
                 messageArea.innerText = "クリックして戻る";
-                document.onclick = () => window.location.href = "index.html?cleared=true";
+                document.onclick = () => window.location.href = "index.html?cleared=shooting";
                 return;
             }
 
