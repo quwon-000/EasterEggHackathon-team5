@@ -18,6 +18,7 @@ let clicks = 0;
 let lifetime = 0;
 let unlockedIds = ['egg'];
 let inputSeq = "";
+let spaceCount = 0;
 
 const stages = [
     { id: 'egg', threshold: 0, img: 'character/egg.png', msg: 'タマゴ', condition: '最初から', bgClass: 'bg-egg' },
@@ -26,10 +27,10 @@ const stages = [
 ];
 
 const secretStages = {
-    'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト', condition: '??? (聖なる力)' },
+    'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト', condition: '図鑑を完成させる' },
     'chicken': { id: 'plane', img: 'character/plane.png', msg: 'ジェット機', condition: 'コマンド入力: shooting' },
     'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' },
-    'puzzle': { id: 'puzzle_chicken', img: 'character/chiken-puzzle.png', msg: 'パズルマスター', condition: 'パズルをクリア' }
+    'puzzle': { id: 'puzzle_chicken', img: 'character/chiken-puzzle.png', msg: 'ニワトリのパズル', condition: 'パズルをクリア' }
 };
 
 window.onload = () => {
@@ -99,7 +100,7 @@ function updateVisuals() {
         saveData();
     }
     if (clicks >= 60 && !isFireworksActive) startFireworks();
-    
+
     checkAllUnlocked();
 }
 
@@ -112,6 +113,14 @@ charWrapper.onclick = () => {
 };
 
 window.onkeydown = (e) => {
+    if (e.key === " ") {
+        spaceCount++;
+        if (spaceCount >= 20 && !unlockedIds.includes('jesus')) {
+            triggerJesusEnding();
+            spaceCount = 0;
+        }
+    }
+
     const key = e.key.toLowerCase();
     inputSeq += key;
     const currentMsg = msgEl.innerText;
@@ -132,7 +141,7 @@ function showSpecialEvolution(type) {
     if (!unlockedIds.includes(secret.id)) unlockedIds.push(secret.id);
     saveData();
     if (!isFireworksActive) startFireworks();
-    
+
     checkAllUnlocked();
 }
 
@@ -147,10 +156,10 @@ function checkAllUnlocked() {
 function triggerJesusEnding() {
     unlockedIds.push('jesus');
     saveData();
-    
+
     // クリア画面やメニューを一旦隠す
     document.getElementById('clear-overlay').style.display = 'none';
-    
+
     // 聖なる演出のオーバーレイ
     const divineOverlay = document.createElement('div');
     divineOverlay.style.position = 'fixed';
@@ -166,7 +175,7 @@ function triggerJesusEnding() {
     divineOverlay.style.flexDirection = 'column';
     divineOverlay.style.alignItems = 'center';
     divineOverlay.style.justifyContent = 'center';
-    
+
     const jesusImg = document.createElement('img');
     jesusImg.src = 'character/jesus.png';
     jesusImg.style.width = '400px';
@@ -175,7 +184,7 @@ function triggerJesusEnding() {
     jesusImg.style.filter = 'drop-shadow(0 0 50px gold)';
     jesusImg.style.transform = 'scale(0.2) translateY(300px)';
     jesusImg.style.transition = 'transform 8s cubic-bezier(0.1, 0.8, 0.3, 1), filter 5s';
-    
+
     const congratsText = document.createElement('div');
     congratsText.innerHTML = "TRUE ENDING<br><span style='font-size: 2rem; color: #555;'>すべての図鑑を開放しました！</span><br><br>CONGRATULATIONS!";
     congratsText.style.color = '#d4af37';
@@ -186,14 +195,14 @@ function triggerJesusEnding() {
     congratsText.style.opacity = '0';
     congratsText.style.transition = 'opacity 3s ease-in';
     congratsText.style.marginTop = '20px';
-    
+
     divineOverlay.appendChild(jesusImg);
     divineOverlay.appendChild(congratsText);
     document.body.appendChild(divineOverlay);
-    
+
     // 聖なる花火を前面に配置
     canvas.style.zIndex = '9999';
-    
+
     // 演出開始
     setTimeout(() => {
         divineOverlay.style.opacity = '1';
@@ -203,7 +212,7 @@ function triggerJesusEnding() {
             congratsText.style.opacity = '1';
         }, 4000);
     }, 100);
-    
+
     // 戻るボタン
     setTimeout(() => {
         const backBtn = document.createElement('button');
@@ -217,12 +226,12 @@ function triggerJesusEnding() {
             location.reload();
         };
         divineOverlay.appendChild(backBtn);
-        
+
         setTimeout(() => backBtn.style.opacity = '1', 100);
     }, 8000);
-    
+
     // 神聖なる花火を打ち上げる
-    isFireworksActive = false; 
+    isFireworksActive = false;
     particles = [];
     isFireworksActive = true;
     const holyInterval = setInterval(() => {
@@ -232,7 +241,7 @@ function triggerJesusEnding() {
         const color = colors[Math.floor(Math.random() * colors.length)];
         for (let i = 0; i < 40; i++) particles.push(new Particle(x, y, color));
     }, 300);
-    
+
     setTimeout(() => clearInterval(holyInterval), 8000);
     animate();
 }
@@ -244,7 +253,35 @@ volumeBar.oninput = (e) => { bgm.volume = e.target.value; };
 document.getElementById('encyclopedia-btn').onclick = () => {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
-    container.appendChild(createRow('egg', null, 'jesus'));
+
+    // 究極の神（イエス）が解放されている場合は、最上段に独立して神々しく表示
+    if (unlockedIds.includes('jesus')) {
+        const divineHeader = document.createElement('h2');
+        divineHeader.style.color = '#fff';
+        divineHeader.style.textShadow = '0 0 20px gold, 0 0 40px gold, 0 0 60px white';
+        divineHeader.style.textAlign = 'center';
+        divineHeader.style.marginBottom = '20px';
+        divineHeader.style.letterSpacing = '10px';
+        divineHeader.innerText = '✨ ALMIGHTY ✨';
+        container.appendChild(divineHeader);
+
+        const divineContainer = document.createElement('div');
+        divineContainer.style.display = 'flex';
+        divineContainer.style.justifyContent = 'center';
+        divineContainer.style.marginBottom = '50px';
+
+        const jesusNode = createNode('jesus');
+        jesusNode.style.transform = 'scale(1.5)';
+        jesusNode.style.borderRadius = '20px';
+        jesusNode.style.border = '3px solid gold';
+        jesusNode.style.boxShadow = '0 0 30px gold, inset 0 0 20px gold';
+        jesusNode.style.background = 'rgba(255, 255, 255, 0.1)';
+
+        divineContainer.appendChild(jesusNode);
+        container.appendChild(divineContainer);
+    }
+
+    container.appendChild(createRow('egg', null, null));
     if (unlockedIds.includes('chicken')) {
         container.appendChild(createVArrow());
         container.appendChild(createRow('chicken', 'block_chicken', 'plane'));
