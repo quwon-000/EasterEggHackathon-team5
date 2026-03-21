@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enchanted Forest Jigsaw Puzzle</title>
+    <link rel="stylesheet" href="style_puzzle.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>ジグソーパズル</h1>
+            <button id="start-btn">もう一度遊ぶ！</button>
+            <div id="message" class="hidden">完成しました！おめでとうございます！🎉</div>
+        </header>
+        
+        <main>
+            <div class="puzzle-area">
+                <div id="board" class="board">
+                    <!-- 9 slots for the puzzle pieces -->
+                    <div class="slot" data-index="0"></div>
+                    <div class="slot" data-index="1"></div>
+                    <div class="slot" data-index="2"></div>
+                    <div class="slot" data-index="3"></div>
+                    <div class="slot" data-index="4"></div>
+                    <div class="slot" data-index="5"></div>
+                    <div class="slot" data-index="6"></div>
+                    <div class="slot" data-index="7"></div>
+                    <div class="slot" data-index="8"></div>
+                </div>
+                <div id="pieces-container" class="pieces-container">
+                    <!-- 9 draggable pieces will be generated here -->
+                </div>
+            </div>
+            <div class="reference-image">
+                <p>完成図:</p>
+                <img src="puzzle-image.png" alt="Reference" width="150" height="150">
+            </div>
+        </main>
+    </div>
+    <script src="script_puzzle.js"></script>
+</body>
+</html>
