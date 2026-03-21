@@ -99,6 +99,8 @@ function updateVisuals() {
         saveData();
     }
     if (clicks >= 60 && !isFireworksActive) startFireworks();
+    
+    checkAllUnlocked();
 }
 
 charWrapper.onclick = () => {
@@ -130,6 +132,109 @@ function showSpecialEvolution(type) {
     if (!unlockedIds.includes(secret.id)) unlockedIds.push(secret.id);
     saveData();
     if (!isFireworksActive) startFireworks();
+    
+    checkAllUnlocked();
+}
+
+function checkAllUnlocked() {
+    const required = ['egg', 'chicken', 'dragon', 'plane', 'block_chicken', 'puzzle_chicken'];
+    const hasAll = required.every(id => unlockedIds.includes(id));
+    if (hasAll && !unlockedIds.includes('jesus')) {
+        setTimeout(triggerJesusEnding, 3500); // 演出後に発動
+    }
+}
+
+function triggerJesusEnding() {
+    unlockedIds.push('jesus');
+    saveData();
+    
+    // クリア画面やメニューを一旦隠す
+    document.getElementById('clear-overlay').style.display = 'none';
+    
+    // 聖なる演出のオーバーレイ
+    const divineOverlay = document.createElement('div');
+    divineOverlay.style.position = 'fixed';
+    divineOverlay.style.top = '0';
+    divineOverlay.style.left = '0';
+    divineOverlay.style.width = '100vw';
+    divineOverlay.style.height = '100vh';
+    divineOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+    divineOverlay.style.opacity = '0';
+    divineOverlay.style.transition = 'opacity 4s ease-in-out';
+    divineOverlay.style.zIndex = '9000';
+    divineOverlay.style.display = 'flex';
+    divineOverlay.style.flexDirection = 'column';
+    divineOverlay.style.alignItems = 'center';
+    divineOverlay.style.justifyContent = 'center';
+    
+    const jesusImg = document.createElement('img');
+    jesusImg.src = 'character/jesus.png';
+    jesusImg.style.width = '400px';
+    jesusImg.style.height = '400px';
+    jesusImg.style.objectFit = 'contain';
+    jesusImg.style.filter = 'drop-shadow(0 0 50px gold)';
+    jesusImg.style.transform = 'scale(0.2) translateY(300px)';
+    jesusImg.style.transition = 'transform 8s cubic-bezier(0.1, 0.8, 0.3, 1), filter 5s';
+    
+    const congratsText = document.createElement('div');
+    congratsText.innerHTML = "TRUE ENDING<br><span style='font-size: 2rem; color: #555;'>すべての図鑑を開放しました！</span><br><br>CONGRATULATIONS!";
+    congratsText.style.color = '#d4af37';
+    congratsText.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+    congratsText.style.textAlign = 'center';
+    congratsText.style.fontSize = '4rem';
+    congratsText.style.fontWeight = 'bold';
+    congratsText.style.opacity = '0';
+    congratsText.style.transition = 'opacity 3s ease-in';
+    congratsText.style.marginTop = '20px';
+    
+    divineOverlay.appendChild(jesusImg);
+    divineOverlay.appendChild(congratsText);
+    document.body.appendChild(divineOverlay);
+    
+    // 聖なる花火を前面に配置
+    canvas.style.zIndex = '9999';
+    
+    // 演出開始
+    setTimeout(() => {
+        divineOverlay.style.opacity = '1';
+        jesusImg.style.transform = 'scale(1) translateY(-20px)';
+        jesusImg.style.filter = 'drop-shadow(0 0 150px white) drop-shadow(0 0 200px gold)';
+        setTimeout(() => {
+            congratsText.style.opacity = '1';
+        }, 4000);
+    }, 100);
+    
+    // 戻るボタン
+    setTimeout(() => {
+        const backBtn = document.createElement('button');
+        backBtn.innerText = '神の祝福を受けてタイトルへ';
+        backBtn.className = 'menu-btn';
+        backBtn.style.marginTop = '40px';
+        backBtn.style.opacity = '0';
+        backBtn.style.transition = 'opacity 2s';
+        backBtn.onclick = () => {
+            canvas.style.zIndex = '1';
+            location.reload();
+        };
+        divineOverlay.appendChild(backBtn);
+        
+        setTimeout(() => backBtn.style.opacity = '1', 100);
+    }, 8000);
+    
+    // 神聖なる花火を打ち上げる
+    isFireworksActive = false; 
+    particles = [];
+    isFireworksActive = true;
+    const holyInterval = setInterval(() => {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const colors = ['#ffffff', '#ffd700', '#ffea00', '#fff8dc'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        for (let i = 0; i < 40; i++) particles.push(new Particle(x, y, color));
+    }, 300);
+    
+    setTimeout(() => clearInterval(holyInterval), 8000);
+    animate();
 }
 
 document.getElementById('settings-btn').onclick = () => settingsModal.style.display = 'flex';
