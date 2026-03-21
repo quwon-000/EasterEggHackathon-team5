@@ -9,6 +9,11 @@ const clearOverlay = document.getElementById('clear-overlay');
 const hintEl = document.getElementById('hint');
 
 
+// BGM要素
+const bgm = document.getElementById('bgm');
+const volumeBar = document.getElementById('volume-bar');
+const settingsModal = document.getElementById('settings-modal');
+
 let particles = [];
 let isFireworksActive = false;
 let clicks = 0;
@@ -30,6 +35,7 @@ const secretStages = {
 
 window.onload = () => {
     loadData();
+    bgm.volume = 0; // 初期音量を0に設定
     const params = new URLSearchParams(window.location.search);
 
     if (params.get('cleared') === 'true') {
@@ -66,6 +72,11 @@ function enterGame() {
     document.getElementById('title-screen').style.display = 'none';
     document.getElementById('game-area').style.display = 'flex';
     document.getElementById('ui-layer').style.display = 'block';
+
+    // ユーザー操作をトリガーにBGM再生開始
+    if (bgm.paused) {
+        bgm.play().catch(e => console.log("Audio play blocked."));
+    }
     updateVisuals();
 }
 
@@ -126,6 +137,11 @@ function showSpecialEvolution(type) {
     if (!isFireworksActive) startFireworks();
 }
 
+// 設定画面（音量調整）の操作
+document.getElementById('settings-btn').onclick = () => settingsModal.style.display = 'flex';
+document.getElementById('close-settings').onclick = () => settingsModal.style.display = 'none';
+volumeBar.oninput = (e) => { bgm.volume = e.target.value; };
+
 document.getElementById('encyclopedia-btn').onclick = () => {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
@@ -165,15 +181,10 @@ function createRow(mainId, leftId, rightId) {
     return row;
 }
 
-/**
- * キャラクターノードを生成（進化条件のツールチップ付き）
- */
 function createNode(id) {
     const node = document.createElement('div');
     node.className = 'char-node';
     const data = stages.find(s => s.id === id) || Object.values(secretStages).find(s => s.id === id);
-
-    // アイコン、名前、そしてツールチップ用の条件を追加
     node.innerHTML = `
         <img src="${data.img}">
         <span>${data.msg}</span>
