@@ -5,7 +5,6 @@ const msgEl = document.getElementById('msg');
 const clicksEl = document.getElementById('clicks');
 const lifetimeEl = document.getElementById('lifetime');
 const charWrapper = document.getElementById('char-wrapper');
-const clearOverlay = document.getElementById('clear-overlay');
 
 let particles = [];
 let isFireworksActive = false;
@@ -15,55 +14,38 @@ let unlockedIds = ['egg'];
 let inputSeq = "";
 
 const stages = [
-    { id: 'egg', threshold: 0, img: 'character/egg.png', msg: 'タマゴ' },
-    { id: 'chicken', threshold: 20, img: 'character/chicken.png', msg: 'ニワトリ' },
-    { id: 'dragon', threshold: 60, img: 'character/dragon.png', msg: 'ドラゴン' }
+    { id: 'egg', threshold: 0, img: 'character/egg.png', msg: 'タマゴ', condition: '最初から' },
+    { id: 'chicken', threshold: 20, img: 'character/chicken.png', msg: 'ニワトリ', condition: '20回クリック' },
+    { id: 'dragon', threshold: 60, img: 'character/dragon.png', msg: 'ドラゴン', condition: '60回クリック' }
 ];
 
 const secretStages = {
-    'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト' },
-    'chicken': { id: 'plane', img: 'character/plane.png', msg: 'ジェット機' },
-    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン' }
+    'egg': { id: 'jesus', img: 'character/jesus.png', msg: 'イエスキリスト', condition: '??? (聖なる力)' },
+    'chicken': { id: 'plane', img: 'character/plane.png', msg: 'ジェット機', condition: 'コマンド入力: shooting' },
+    'special': { id: 'block_chicken', img: 'character/block_chiken.png', msg: 'ブロックチキン', condition: 'コマンド入力: block' }
 };
 
 window.onload = () => {
+    loadData();
     const params = new URLSearchParams(window.location.search);
+
     if (params.get('cleared') === 'true') {
-        loadData();
-        showSpecialEvolution('special');
+        if (unlockedIds.includes('chicken') && !unlockedIds.includes('plane')) {
+            showSpecialEvolution('chicken');
+        } else {
+            showSpecialEvolution('special');
+        }
         window.history.replaceState({}, document.title, "index.html");
     } else {
         updateMenuButtons();
     }
-    const savedLifetime = parseInt(localStorage.getItem('egg_lifetime')) || 0;
-    lifetimeEl.innerText = savedLifetime;
 };
 
 function loadData() {
     clicks = parseInt(localStorage.getItem('egg_clicks')) || 0;
     lifetime = parseInt(localStorage.getItem('egg_lifetime')) || 0;
     unlockedIds = JSON.parse(localStorage.getItem('egg_unlocked')) || ['egg'];
-}
-
-function showSpecialEvolution(type) {
-    document.getElementById('title-screen').style.display = 'none';
-    document.getElementById('game-area').style.display = 'block';
-    // 特殊進化時もボタンを表示し続ける
-    document.getElementById('encyclopedia-btn').style.display = 'block';
-    document.getElementById('back-to-title-btn').style.display = 'block';
-
-    const secret = secretStages[type];
-    charImg.src = secret.img;
-    msgEl.innerText = secret.msg;
-    if (!unlockedIds.includes(secret.id)) unlockedIds.push(secret.id);
-    saveData();
-    charWrapper.classList.add('finished');
-    startFireworks();
-}
-
-function updateMenuButtons() {
-    const savedLifetime = localStorage.getItem('egg_lifetime');
-    document.getElementById('continue-btn').disabled = !(savedLifetime && savedLifetime > 0);
+    lifetimeEl.innerText = lifetime;
 }
 
 function saveData() {
@@ -73,11 +55,14 @@ function saveData() {
     updateMenuButtons();
 }
 
+function updateMenuButtons() {
+    document.getElementById('continue-btn').disabled = (lifetime === 0);
+}
+
 function enterGame() {
     document.getElementById('title-screen').style.display = 'none';
-    document.getElementById('game-area').style.display = 'block';
-    document.getElementById('encyclopedia-btn').style.display = 'block';
-    document.getElementById('back-to-title-btn').style.display = 'block';
+    document.getElementById('game-area').style.display = 'flex';
+    document.getElementById('ui-layer').style.display = 'block';
     updateVisuals();
 }
 
@@ -93,20 +78,13 @@ function updateVisuals() {
         unlockedIds.push(current.id);
         saveData();
     }
-
-    if (clicks >= 60) {
-        charWrapper.classList.add('finished');
-        startFireworks();
-    }
+    if (clicks >= 60 && !isFireworksActive) startFireworks();
 }
 
 charWrapper.onclick = () => {
     if (isFireworksActive) return;
-    charWrapper.classList.remove('click-bounce');
-    void charWrapper.offsetWidth;
     charWrapper.classList.add('click-bounce');
-    setTimeout(() => charWrapper.classList.remove('click-bounce'), 80);
-
+    setTimeout(() => charWrapper.classList.remove('click-bounce'), 100);
     clicks++;
     lifetime++;
     saveData();
@@ -116,155 +94,152 @@ charWrapper.onclick = () => {
 window.onkeydown = (e) => {
     const key = e.key.toLowerCase();
     inputSeq += key;
+    const currentMsg = msgEl.innerText;
+
     if ("block".startsWith(inputSeq)) {
         if (inputSeq === "block") window.location.href = "block.html";
+    } else if ("shooting".startsWith(inputSeq)) {
+        if (inputSeq === "shooting" && currentMsg === "ニワトリ") {
+            window.location.href = "shooting.html";
+        }
     } else {
-        inputSeq = (key === "b") ? "b" : "";
-    }
-
-    if (e.ctrlKey && e.key === 'Enter' && document.getElementById('game-area').style.display === 'block') {
-        let currentMainId = "";
-        const currentMsg = msgEl.innerText;
-        stages.forEach(s => { if (s.msg === currentMsg) currentMainId = s.id; });
-        if (secretStages[currentMainId]) showSpecialEvolution(currentMainId);
+        inputSeq = (key === "b" || key === "s") ? key : "";
     }
 };
 
-// --- 図鑑生成ロジック (ブロックチキンをニワトリの左に配置) ---
+function showSpecialEvolution(type) {
+    enterGame();
+    const secret = secretStages[type];
+    charImg.src = secret.img;
+    msgEl.innerText = secret.msg;
+    if (!unlockedIds.includes(secret.id)) unlockedIds.push(secret.id);
+    saveData();
+    if (!isFireworksActive) startFireworks();
+}
+
 document.getElementById('encyclopedia-btn').onclick = () => {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
-
-    // タマゴ行 (右にイエス)
-    container.appendChild(createTreeRow('egg', 'jesus', 'right'));
-
-    // ニワトリ行 (左にブロックチキン、右にジェット機)
+    container.appendChild(createRow('egg', null, 'jesus'));
     if (unlockedIds.includes('chicken')) {
-        container.appendChild(createVArrow('chicken'));
-        container.appendChild(createFullTreeRow('chicken', 'block_chicken', 'plane'));
+        container.appendChild(createVArrow());
+        container.appendChild(createRow('chicken', 'block_chicken', 'plane'));
     }
-
-    // ドラゴン行
     if (unlockedIds.includes('dragon')) {
-        container.appendChild(createVArrow('dragon'));
-        container.appendChild(createTreeRow('dragon', null, 'none'));
+        container.appendChild(createVArrow());
+        container.appendChild(createRow('dragon', null, null));
     }
-
     document.getElementById('encyclopedia-screen').style.display = 'flex';
 };
 
-// 左右に隠しキャラがいる特別な行を作成
-function createFullTreeRow(mainId, leftSecretId, rightSecretId) {
+function createRow(mainId, leftId, rightId) {
     const row = document.createElement('div');
     row.className = 'tree-row-grid';
-
-    // 左側 (ブロックチキン)
-    const leftCont = document.createElement('div');
-    leftCont.className = 'node-left-container'; // CSSで調整
-    if (unlockedIds.includes(leftSecretId)) {
-        leftCont.appendChild(createNode(leftSecretId));
-        leftCont.innerHTML += `<div class="arrow-h">◀</div><div class="line-h"></div>`;
-        leftCont.style.display = 'flex';
-        leftCont.style.alignItems = 'center';
-        leftCont.style.gridColumn = '1';
-        leftCont.style.justifyContent = 'flex-end';
+    const left = document.createElement('div');
+    left.className = 'node-left-container';
+    if (leftId && unlockedIds.includes(leftId)) {
+        left.appendChild(createNode(leftId));
+        left.innerHTML += '<div class="arrow-h">◀</div><div class="line-h"></div>';
     }
-    row.appendChild(leftCont);
-
-    // 中央 (メイン)
-    const mainDiv = document.createElement('div');
-    mainDiv.className = 'node-main';
-    mainDiv.appendChild(createNode(mainId));
-    row.appendChild(mainDiv);
-
-    // 右側 (ジェット機)
-    const rightCont = document.createElement('div');
-    rightCont.className = 'node-secret-container';
-    if (unlockedIds.includes(rightSecretId)) {
-        rightCont.innerHTML = `<div class="line-h"></div><div class="arrow-h">▶</div>`;
-        rightCont.appendChild(createNode(rightSecretId));
+    row.appendChild(left);
+    const mid = document.createElement('div');
+    mid.className = 'node-main';
+    mid.appendChild(createNode(mainId));
+    row.appendChild(mid);
+    const right = document.createElement('div');
+    right.className = 'node-secret-container';
+    if (rightId && unlockedIds.includes(rightId)) {
+        right.innerHTML += '<div class="line-h"></div><div class="arrow-h">▶</div>';
+        right.appendChild(createNode(rightId));
     }
-    row.appendChild(rightCont);
-
+    row.appendChild(right);
     return row;
 }
 
-function createTreeRow(mainId, secretId, side) {
-    const row = document.createElement('div');
-    row.className = 'tree-row-grid';
-    const mainDiv = document.createElement('div');
-    mainDiv.className = 'node-main';
-    mainDiv.appendChild(createNode(mainId));
-    row.appendChild(mainDiv);
-
-    if (side === 'right' && secretId && unlockedIds.includes(secretId)) {
-        const secretCont = document.createElement('div');
-        secretCont.className = 'node-secret-container';
-        secretCont.innerHTML = `<div class="line-h"></div><div class="arrow-h">▶</div>`;
-        secretCont.appendChild(createNode(secretId));
-        row.appendChild(secretCont);
-    }
-    return row;
-}
-
-function createVArrow(targetId) {
-    const row = document.createElement('div');
-    row.className = 'tree-arrow-row';
-    const cont = document.createElement('div');
-    cont.className = `arrow-v-container ${unlockedIds.includes(targetId) ? 'active' : ''}`;
-    cont.innerText = '▼';
-    row.appendChild(cont);
-    return row;
-}
-
+/**
+ * キャラクターノードを生成（進化条件のツールチップ付き）
+ */
 function createNode(id) {
     const node = document.createElement('div');
-    node.className = 'char-node unlocked';
+    node.className = 'char-node';
     const data = stages.find(s => s.id === id) || Object.values(secretStages).find(s => s.id === id);
-    node.innerHTML = `<img src="${data.img}"><span>${data.msg}</span>`;
+
+    // アイコン、名前、そしてツールチップ用の条件を追加
+    node.innerHTML = `
+        <img src="${data.img}">
+        <span>${data.msg}</span>
+        <div class="tooltip">条件: ${data.condition}</div>
+    `;
     return node;
 }
 
-// --- 以下共通処理 ---
+function createVArrow() {
+    const div = document.createElement('div');
+    div.className = 'tree-arrow-row';
+    div.innerText = '▼';
+    return div;
+}
+
 document.getElementById('new-game-btn').onclick = () => {
-    const savedLifetime = localStorage.getItem('egg_lifetime');
-    if (savedLifetime && savedLifetime > 0) document.getElementById('confirm-modal').style.display = 'flex';
+    if (lifetime > 0) document.getElementById('confirm-modal').style.display = 'flex';
     else startNewGame();
 };
-document.getElementById('confirm-yes').onclick = () => { document.getElementById('confirm-modal').style.display = 'none'; startNewGame(); };
+document.getElementById('confirm-yes').onclick = () => { startNewGame(); document.getElementById('confirm-modal').style.display = 'none'; };
 document.getElementById('confirm-no').onclick = () => document.getElementById('confirm-modal').style.display = 'none';
-document.getElementById('continue-btn').onclick = () => { loadData(); enterGame(); };
-function startNewGame() { clicks = 0; lifetime = 0; unlockedIds = ['egg']; saveData(); enterGame(); }
-document.getElementById('restart-btn').onclick = () => { clicks = 0; saveData(); clearOverlay.style.display = 'none'; charWrapper.classList.remove('finished'); updateVisuals(); };
+document.getElementById('continue-btn').onclick = enterGame;
 document.getElementById('back-to-title-btn').onclick = () => location.reload();
 document.getElementById('close-encyclopedia').onclick = () => document.getElementById('encyclopedia-screen').style.display = 'none';
 
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.addEventListener('resize', resize);
-resize();
+document.getElementById('restart-btn').onclick = () => {
+    clicks = 0;
+    saveData();
+    document.getElementById('clear-overlay').style.display = 'none';
+    isFireworksActive = false;
+    particles = [];
+    enterGame();
+};
+
+function startNewGame() {
+    clicks = 0; lifetime = 0; unlockedIds = ['egg'];
+    saveData(); enterGame();
+}
+
+function startFireworks() {
+    isFireworksActive = true;
+    resize();
+    const interval = setInterval(() => {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * (canvas.height * 0.5);
+        const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
+    }, 300);
+    setTimeout(() => {
+        clearInterval(interval);
+        document.getElementById('clear-overlay').style.display = 'flex';
+    }, 3000);
+    animate();
+}
 
 class Particle {
     constructor(x, y, color) {
         this.x = x; this.y = y; this.color = color;
-        this.velocity = { x: (Math.random() - 0.5) * 12, y: (Math.random() - 0.5) * 12 };
-        this.alpha = 1; this.decay = Math.random() * 0.02 + 0.02;
+        this.v = { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 };
+        this.a = 1;
     }
-    update() { this.velocity.y += 0.1; this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.decay; }
-    draw() { ctx.save(); ctx.globalAlpha = this.alpha; ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); }
+    draw() {
+        ctx.globalAlpha = this.a; ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    update() { this.x += this.v.x; this.y += this.v.y; this.v.y += 0.1; this.a -= 0.02; }
 }
+
 function animate() {
-    if (!isFireworksActive && particles.length === 0) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+    if (particles.length === 0 && !isFireworksActive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => { p.update(); p.draw(); if (p.a <= 0) particles.splice(i, 1); });
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(18, 18, 18, 0.2)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p, i) => { if (p.alpha > 0) { p.update(); p.draw(); } else { particles.splice(i, 1); } });
 }
-function startFireworks() {
-    isFireworksActive = true; animate();
-    const interval = setInterval(() => {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * (canvas.height * 0.6);
-        const color = `hsl(${Math.random() * 360}, 100%, 60%)`;
-        for (let i = 0; i < 50; i++) particles.push(new Particle(x, y, color));
-    }, 250);
-    setTimeout(() => { clearInterval(interval); isFireworksActive = false; setTimeout(() => { clearOverlay.style.display = 'flex'; }, 500); }, 3000);
-}
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.onresize = resize;
+resize();
