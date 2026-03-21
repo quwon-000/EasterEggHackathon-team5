@@ -6,6 +6,7 @@ const clicksEl = document.getElementById('clicks');
 const lifetimeEl = document.getElementById('lifetime');
 const charWrapper = document.getElementById('char-wrapper');
 const clearOverlay = document.getElementById('clear-overlay');
+const hintEl = document.getElementById('hint');
 
 let particles = [];
 let isFireworksActive = false;
@@ -88,6 +89,12 @@ function updateVisuals() {
     msgEl.innerText = current.msg;
     clicksEl.innerText = clicks;
     lifetimeEl.innerText = lifetime;
+
+    if (hintEl) {
+        const hintText = "eorfn";
+        const showLength = Math.floor(lifetime / 60);
+        hintEl.innerText = hintText.substring(0, showLength);
+    }
 
     if (!unlockedIds.includes(current.id)) {
         unlockedIds.push(current.id);
